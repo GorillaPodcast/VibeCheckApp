@@ -19,7 +19,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM4YjVjZjY7c3RvcC1vcGFjaXR5OjEiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM3YzNhZWQ7c3RvcC1vcGFjaXR5OjEiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9Ijc2IiBmaWxsPSJ1cmwoI2cpIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCBCbGFjaywgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIzNjAiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCI+VjwvdGV4dD48L3N2Zz4=">
 
 <!-- PWA Manifest -->
-<link rel="manifest" href="#" id="manifest-link">
+<link rel="manifest" href="manifest.json">
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -109,6 +109,12 @@
     <h1 class="text-4xl font-black mb-4 tracking-tighter">VibeCheck <span class="gradient-text">Pro</span></h1>
     <p class="text-slate-400 max-w-xs mb-12 leading-relaxed">This professional tool requires installation to your Home Screen to unlock native features.</p>
     
+    <!-- DEBUG PANEL -->
+    <div id="debug-panel" class="glass p-4 rounded-2xl mb-6 max-w-md text-left text-xs space-y-2">
+        <div class="text-emerald-400 font-bold mb-2">🔍 PWA Diagnostics:</div>
+        <div id="debug-info" class="text-slate-300 space-y-1 font-mono"></div>
+    </div>
+    
     <div id="ios-instructions" class="hidden space-y-6">
         <div class="glass p-6 rounded-3xl border border-violet-500/20">
             <p class="text-sm font-bold mb-4">1. Tap the <i class="fa-solid fa-share-from-square text-violet-400 mx-1"></i> share icon</p>
@@ -193,40 +199,51 @@
 </div>
 
 <script>
-    // Generate manifest dynamically with embedded icon
-    const iconDataUri = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM4YjVjZjY7c3RvcC1vcGFjaXR5OjEiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiM3YzNhZWQ7c3RvcC1vcGFjaXR5OjEiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9Ijc2IiBmaWxsPSJ1cmwoI2cpIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCBCbGFjaywgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIzNjAiIGZvbnQtd2VpZ2h0PSI5MDAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCI+VjwvdGV4dD48L3N2Zz4=';
-    
-    const pwaManifest = {
-        "name": "VibeCheck Pro Director",
-        "short_name": "VibeCheck",
-        "start_url": "./",
-        "display": "standalone",
-        "background_color": "#020617",
-        "theme_color": "#020617",
-        "orientation": "portrait",
-        "scope": "./",
-        "icons": [
-            {
-                "src": iconDataUri,
-                "sizes": "512x512",
-                "type": "image/svg+xml",
-                "purpose": "any maskable"
-            }
-        ]
+    // Debug Logger
+    const debugLog = (message, status = 'info') => {
+        const debugDiv = document.getElementById('debug-info');
+        if (debugDiv) {
+            const icon = status === 'success' ? '✅' : status === 'error' ? '❌' : status === 'warning' ? '⚠️' : 'ℹ️';
+            const color = status === 'success' ? 'text-emerald-400' : status === 'error' ? 'text-red-400' : status === 'warning' ? 'text-yellow-400' : 'text-slate-300';
+            debugDiv.innerHTML += `<div class="${color}">${icon} ${message}</div>`;
+        }
+        console.log(`[PWA Debug] ${message}`);
     };
 
-    // Create manifest blob
-    const manifestBlob = new Blob([JSON.stringify(pwaManifest)], { type: 'application/json' });
-    const manifestURL = URL.createObjectURL(manifestBlob);
-    document.getElementById('manifest-link').setAttribute('href', manifestURL);
+    // Run diagnostics
+    window.addEventListener('load', () => {
+        debugLog(`Protocol: ${window.location.protocol}`, window.location.protocol === 'https:' ? 'success' : 'error');
+        debugLog(`User Agent: ${navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'}`);
+        debugLog(`Service Worker support: ${('serviceWorker' in navigator) ? 'Yes' : 'No'}`, ('serviceWorker' in navigator) ? 'success' : 'error');
+        debugLog(`Standalone mode: ${window.matchMedia('(display-mode: standalone)').matches ? 'Yes' : 'No'}`, window.matchMedia('(display-mode: standalone)').matches ? 'success' : 'info');
+        debugLog(`iOS Standalone: ${window.navigator.standalone ? 'Yes' : 'No'}`, window.navigator.standalone ? 'success' : 'info');
+        
+        // Check manifest
+        fetch('./manifest.json')
+            .then(r => r.ok ? debugLog('Manifest found', 'success') : debugLog('Manifest NOT found', 'error'))
+            .catch(() => debugLog('Manifest error', 'error'));
+        
+        // Check service worker
+        fetch('./sw.js')
+            .then(r => r.ok ? debugLog('Service Worker file found', 'success') : debugLog('Service Worker NOT found', 'error'))
+            .catch(() => debugLog('Service Worker error', 'error'));
+    });
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').then(() => {
-            console.log('Service Worker Registered');
-        }).catch(err => {
-            console.log('SW registration failed', err);
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => {
+                    debugLog('Service Worker registered! ✓', 'success');
+                    console.log('SW Registered:', reg);
+                })
+                .catch(err => {
+                    debugLog(`SW registration failed: ${err.message}`, 'error');
+                    console.error('SW Error:', err);
+                });
         });
+    } else {
+        debugLog('Service Worker not supported', 'error');
     }
 
     // --- PWA GATEKEEPER ---
@@ -254,16 +271,23 @@
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
+        debugLog('Install prompt available', 'success');
     });
 
     function installAndroid() {
         if (deferredPrompt) {
+            debugLog('Showing install prompt...', 'info');
             deferredPrompt.prompt();
             deferredPrompt.userChoice.then(res => { 
                 if(res.outcome === 'accepted') {
+                    debugLog('User accepted install', 'success');
                     setTimeout(checkStandalone, 500);
+                } else {
+                    debugLog('User dismissed install', 'warning');
                 }
             });
+        } else {
+            debugLog('No install prompt available (try menu → Add to Home Screen)', 'warning');
         }
     }
 
